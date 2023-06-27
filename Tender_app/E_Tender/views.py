@@ -7,7 +7,7 @@ from .forms import BidForm,TenderForm
 from .models import Bid,Tender
 
 # Create your views here.
-# An API to add data to our Vendor model
+# An API to add data to our Tender model
 
 class TenderCreateAPIView(generics.CreateAPIView):
     queryset = Tender.objects.all()
@@ -20,6 +20,8 @@ class TenderCreateAPIView(generics.CreateAPIView):
             serializer = TenderSerializer(tender)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# An API to add data to our Bid model
 
 class BidCreateAPIView(generics.CreateAPIView):
     queryset = Bid.objects.all()
