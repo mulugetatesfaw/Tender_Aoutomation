@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crispy_forms',
+    'E_Tender',
+    'rest_framework',
+    'django.core.serializers',
 ]
 
 MIDDLEWARE = [
