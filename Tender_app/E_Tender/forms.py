@@ -1,6 +1,6 @@
 #create your forms here
 from django import forms
-from .models import Bid,Tender,Vendor
+from .models import Bid,Tender,Vendor,Grade
 #vendor form
 class VendorForm(forms.ModelForm):
     class Meta:
@@ -16,5 +16,9 @@ class BidForm(forms.ModelForm):
     class Meta:
         model = Bid
         fields = '__all__'
-
+# Grade bid form
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = Grade
+        fields = '__all__'
 
