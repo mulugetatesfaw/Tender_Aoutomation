@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 class User(models.Model):
     email = models.EmailField(max_length=255)
     pass_word = models.CharField(max_length=255)
+    user_name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     #compony = models.OneToOneField(Vendor, on_delete=models.CASCADE, related_name='users')
 
@@ -15,7 +16,7 @@ class Vendor(models.Model):
     phone_number =models.CharField(max_length=20)
     campony = models.CharField(max_length=255)
     TYPE_CHOICES = (
-        ('Type 1', 'construction'),
+        ('Type 1', 'Construction'),
         ('Type 2', 'Telecomunication'),
         ('Type 3', 'Software products')
     )
@@ -51,7 +52,7 @@ class Bid(models.Model):
     tender = models.ForeignKey(Tender, on_delete=models.CASCADE)#, related_name='bids')
     bid_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='Pending')
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    bid_amount = models.DecimalField(max_digits=10, decimal_places=2)
     document_path = models.FileField(upload_to='bid_documents/')
 
     def str(self):

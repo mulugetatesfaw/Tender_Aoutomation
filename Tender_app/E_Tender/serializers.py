@@ -20,3 +20,8 @@ class GradeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grade
         fields = 'all'
+#serialiser to delete specific vender
+class VendorDeleteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vendor
+        fields = []
