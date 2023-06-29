@@ -29,7 +29,7 @@ class Vendor(models.Model):
 
 class Tender(models.Model):
     post_date = models.DateTimeField(auto_now_add=True)
-    expire_date = models.DateTimeField(auto_now_add=True)
+    expiry_date = models.DateTimeField(auto_now_add=True)
     STATUS_CHOICES = (
        ('Open', 'Open'),
        ('Closed', 'Closed')

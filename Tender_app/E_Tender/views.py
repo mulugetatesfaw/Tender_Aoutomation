@@ -3,8 +3,9 @@ from django.shortcuts import render, redirect
 from rest_framework import status,generics
 from .serializers import BidSerializer,TenderSerializer,VendorSerializer,GradeSerializer,VendorDeleteSerializer
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 #from rest_framework.decorators import api_view
-from .forms import BidForm,TenderForm,VendorForm,GradeForm,VendorDeleteForm
+from .forms import BidForm,TenderForm,VendorForm,GradeForm
 from .models import Bid,Tender,Vendor,Grade
 
 # Create your views here.
@@ -13,7 +14,7 @@ class VendorCreateAPIView(generics.CreateAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
 
-    def post_vender(self, request, *args, **kwargs):
+    def post_vender(self, request, *args, **kwargs):    
         form = VendorForm(request.POST)
         if form.is_valid():
             Vendor = form.save()
@@ -37,7 +38,7 @@ class TenderCreateAPIView(generics.CreateAPIView):
 
 # An API to add data to our Bid model
 
-class BidCreateAPIView(generics.CreateAPIView):
+'''class BidCreateAPIView(generics.CreateAPIView):
     queryset = Bid.objects.all()
     serializer_class = BidSerializer
 
@@ -52,6 +53,21 @@ class BidCreateAPIView(generics.CreateAPIView):
             serializer = BidSerializer(bid)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+'''
+class BidCreateAPIView(generics.CreateAPIView):
+    queryset = Bid.objects.all()
+    serializer_class = BidSerializer
+    form_class = BidForm
+
+    def post_bid(self, request, tender_pk):
+        tender = Tender.objects.get(pk=tender_pk)
+        if tender.expiry_date and tender.expiry_date < timezone.now():
+            return Response({'error': 'Tender expiry date has already passed.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(tender=tender)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     
 # API to add grades to our bids
@@ -127,3 +143,36 @@ class GradeUpdateAPIView(generics.UpdateAPIView):
 class VendorDeleteAPIView(generics.DestroyAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorDeleteSerializer
+
+# API to delete specific Tender    
+@api_view(['DELETE'])
+def delete_tender(request, pk):
+    try:
+        tender = Tender.objects.get(pk=pk)
+    except Tender.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    tender.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+# API to delete a specific Bid
+@api_view(['DELETE'])
+def delete_bid(request, pk):
+    try:
+        bid = Bid.objects.get(pk=pk)
+    except Bid.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    bid.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Api to show available (posted) tenders
+
+class TenderList(generics.ListCreateAPIView):
+    queryset = Tender.objects.all()
+    serializer_class = TenderSerializer
+
+class BidList(generics.ListCreateAPIView):
+    queryset = Bid.objects.all()
+    serializer_class = BidSerializer
+
