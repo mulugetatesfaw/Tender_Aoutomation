@@ -28,8 +28,10 @@ class Vendor(models.Model):
         return self.vender_of
 
 class Tender(models.Model):
+    Title= models.CharField(max_length=255)
+    Description= models.TextField(max_length= 450)
     post_date = models.DateTimeField(auto_now_add=True)
-    expiry_date = models.DateTimeField(auto_now_add=True)
+    expiry_date = models.DateTimeField()
     STATUS_CHOICES = (
        ('Open', 'Open'),
        ('Closed', 'Closed')
@@ -63,7 +65,7 @@ class Grade(models.Model):
     bid = models.OneToOneField(Bid, on_delete=models.CASCADE) #related_name='grade')
     grade_mark = models.CharField(max_length=255)
     collection = models.CharField(max_length=255)
-    date = models.DateTimeField(auto_now_add=True)
+    creation_date = models.DateTimeField(auto_now_add=True)
 
     def str(self):
         return self.bid

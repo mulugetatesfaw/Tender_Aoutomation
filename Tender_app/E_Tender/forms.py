@@ -31,5 +31,14 @@ class VendorDeleteForm(forms.ModelForm):
     class Meta:
         model = Vendor
         fields = []
-
-
+        
+# Delete tender form
+class TenderDeleteForm(forms.ModelForm):
+    class Meta:
+        model = Tender
+        fields = []
+#Form to delete bid
+class BidDeleteForm(forms.ModelForm):
+    class Meta:
+        model = Bid
+        fields = []

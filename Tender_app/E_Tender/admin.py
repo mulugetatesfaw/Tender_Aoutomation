@@ -5,3 +5,31 @@ from.import models
 admin.site.site_header='E-Tender Administrator'
 admin.site.site_title='Tender Aoutomation System'
 admin.site.index_title='Well come to E-Tender'
+
+@admin.register(models.Bid)
+class BidAdmin(admin.ModelAdmin):
+    list_display=[ 'bid_date', 'status','bid_amount']
+    search_fields=[' status', 'bid_date']
+    list_filter = ['bid_date']
+    search_fields=[' status', 'bid_date']
+
+@admin.register(models.Tender)
+class TenderAdmin(admin.ModelAdmin):
+    list_display=[ 'post_date', 'expiry_date','status']
+    search_fields=['post_date', 'expiry_date','status']
+    list_filter = ['post_date', 'expiry_date','status']
+    search_fields=['post_date', 'expiry_date','status']
+
+@admin.register(models.Vendor)
+class VendorAdmin(admin.ModelAdmin):
+    list_display=[ 'vender_of', 'campony']
+    search_fields=['vender_of', 'campony']
+    list_filter = ['vender_of', 'campony']
+    search_fields=['vender_of', 'campony']
+
+@admin.register(models.Grade)
+class GradeAdmin(admin.ModelAdmin):
+    list_display=[ 'graded_by', ]
+    search_fields=[ 'graded_by', 'grade_mark',' creation_date']
+    list_filter = [ 'graded_by', 'grade_mark',]
+    search_fields=[ 'graded_by', 'grade_mark',' creation_date']
