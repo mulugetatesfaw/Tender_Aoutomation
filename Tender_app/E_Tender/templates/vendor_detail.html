@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Vendor details</h1>
+  <dl>
+    <dt>Created By:</dt>
+    <dd>{{ vendor.created_by }}</dd>
+    <dt>Phone Number:</dt>
+    <dd>{{ vendor.phone_number }}</dd>
+    <dt>Company:</dt>
+    <dd>{{ vendor.company }}</dd>
+    <dt>Category:</dt>
+    <dd>{{ vendor.category }}</dd>
+    <dt>Address:</dt>
+    <dd>{{ vendor.address }}</dd>
+  </dl>
+  <p><a href="{% url 'edit_vendor' pk=vendor.pk %}">Edit vendor</a></p>
+{% endblock %}

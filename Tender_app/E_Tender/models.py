@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 # Create your models here.
 class User(models.Model):
     email = models.EmailField(max_length=255)
@@ -12,7 +13,7 @@ class User(models.Model):
         return self.user_name
     
 class Vendor(models.Model):
-    vender_of= models.OneToOneField(User, on_delete=models.CASCADE,) # related_name='users')
+    created_by= models.OneToOneField(User, on_delete=models.CASCADE,) # related_name='users')
     phone_number =models.CharField(max_length=20)
     campony = models.CharField(max_length=255)
     TYPE_CHOICES = (
@@ -25,23 +26,27 @@ class Vendor(models.Model):
     address = models.CharField(max_length=255)
 
     def str(self):
-        return self.vender_of
+        return self.created_by
 
 class Tender(models.Model):
-    Title= models.CharField(max_length=255)
+    name= models.CharField(max_length=255)
     Description= models.TextField(max_length= 450)
-    post_date = models.DateTimeField(auto_now_add=True)
-    expiry_date = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    expiration_date = models.DateTimeField()
+    service_fee = models.DecimalField(max_digits=10, decimal_places=2)
     STATUS_CHOICES = (
        ('Open', 'Open'),
        ('Closed', 'Closed')
     )
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='open')
     document_path = models.FileField(upload_to='tender_documents/')
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE,)# related_name='tenders')
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE,)
 
-    def str(self):
-        return self.Vendor
+    def __str__(self):
+        return self.name
+    
+    def is_expired(self):
+        return timezone.now() > self.expiration_date
 
 class Bid(models.Model):
     STATUS_CHOICES = (
@@ -53,8 +58,9 @@ class Bid(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     tender = models.ForeignKey(Tender, on_delete=models.CASCADE)#, related_name='bids')
     bid_date = models.DateTimeField(auto_now_add=True)
+    bidder = models.ForeignKey(User, on_delete=models.CASCADE)
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='Pending')
-    bid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     document_path = models.FileField(upload_to='bid_documents/')
 
     def str(self):

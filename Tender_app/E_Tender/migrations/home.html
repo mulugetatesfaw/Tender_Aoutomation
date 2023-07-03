@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Welcome to the Tender Management System</h1>
+  <ul>
+    <li><a href="{% url 'vendor_list' %}">Vendors</a></li>
+    <li><a href="{% url 'tender_list' %}">Tenders</a></li>
+    <li><a href="{% url 'bid_list' %}">Bids</a></li>
+    <li><a href="{% url 'grade_list' %}">Grades</a></li>
+  </ul>
+{% endblock %}
