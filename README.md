@@ -5,7 +5,7 @@
 
 <br>
 
-<h1>The main components of web-based E-Tender Application includes:</h1>
+<h1>The main components of this web-based Tender Application includes:</h1>
 1.	User and Vendor management: This component is responsible for managing users and vender’s registration, authentication, and authorization. It includes features such as user roles and permissions, user profiles, and password management and vendors API generation.
 2.	Tender management: This component is responsible for managing the tender process. It includes features such as tender creation, publication, and tracking. It also includes a document management system where all tender documents are stored, and bidders can access and download them.
 3.	Bid management: This component is responsible for managing bids, tracking their status, and evaluating them. It includes features such as bid submission, bid opening, and bid evaluation. It also includes the ability to request and respond to bidder queries.
