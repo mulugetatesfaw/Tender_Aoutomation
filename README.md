@@ -1,2 +1,2 @@
-# Tender_Aoutomation
-Tender Automation  Web Application project using python django framework.
+<h1>Tender_Aoutomation</h1>
+<h6>This software proposal aims to develop an electronic tender creation, processing and grant tool. It will automate the tender opening, processing and grant by reducing manual intervention, and ensuring transparency. The software speeds up processes related to bid evaluation, vendor registration, contract management, and more. It will reduce human error, increase the speed of processing, and enhance transparency and accountability.</h6>
