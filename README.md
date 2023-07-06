@@ -20,3 +20,7 @@
 
 ![image](https://github.com/mulugetatesfaw/Tender_Aoutomation/assets/113685647/f6a576fd-93cc-417f-8a2d-5c7af45ca8c8)
 
+
+<h1>Data Model</h1>
+![image](https://github.com/mulugetatesfaw/Tender_Aoutomation/assets/113685647/a5d5e72b-926d-4d55-977e-d786f2f37d7c)
+
