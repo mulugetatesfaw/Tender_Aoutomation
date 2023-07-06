@@ -15,5 +15,8 @@
 7.	ERP integration: This component enables the E-Tender software to integrate with an organization's ERP or other legacy system, enabling seamless exchange of data between the two systems.
 
 
+<h1>Architecture</h1>
+
+
 ![image](https://github.com/mulugetatesfaw/Tender_Aoutomation/assets/113685647/f6a576fd-93cc-417f-8a2d-5c7af45ca8c8)
 
