@@ -22,14 +22,7 @@ class TenderAdmin(admin.ModelAdmin):
 
 @admin.register(models.Vendor)
 class VendorAdmin(admin.ModelAdmin):
-    list_display=[ 'created_by', 'campony']
-    search_fields=['vender_of', 'campony']
-    list_filter = ['created_by', 'campony']
-    search_fields=['created_by' ,'campony']
-
-@admin.register(models.Grade)
-class GradeAdmin(admin.ModelAdmin):
-    list_display=[ 'graded_by', ]
-    search_fields=[ 'graded_by', 'grade_mark',' creation_date']
-    list_filter = [ 'graded_by', 'grade_mark',]
-    search_fields=[ 'graded_by', 'grade_mark',' creation_date']
+    list_display=[ 'user', 'campony']
+    search_fields=['user', 'campony']
+    list_filter = ['user', 'campony']
+    search_fields=['user' ,'campony']

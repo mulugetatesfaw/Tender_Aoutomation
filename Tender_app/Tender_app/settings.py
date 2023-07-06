@@ -41,7 +41,16 @@ INSTALLED_APPS = [
     'E_Tender',
     'rest_framework',
     'django.core.serializers',
+    #'django.contrib.sites',
+    'rest_framework.authtoken',
+    
 ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    # ...
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

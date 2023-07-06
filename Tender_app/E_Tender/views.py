@@ -1,264 +1,257 @@
-#from datetime import timezone
-from django.shortcuts import get_object_or_404
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-from django.urls import reverse
-from django.shortcuts import render, redirect
-from rest_framework import status,generics,permissions
-from .serializers import BidSerializer,TenderSerializer,VendorSerializer,GradeSerializer,VendorDeleteSerializer
+from datetime import datetime,timezone
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
-import stripe
-from django.conf import settings
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from rest_framework.decorators import api_view
-from .forms import PaymentForm
-from .forms import BidForm,TenderForm,VendorForm,GradeForm
-from .models import Bid,Tender,Vendor,Grade
+from rest_framework import status
 
+#import stripe
+from .models import User,Vendor,Tender,Bid
+from django.core.exceptions import PermissionDenied
+from rest_framework import generics, status, permissions
+from rest_framework.response import Response
+from .serializers import VendorSerializer, UserSerializer,TenderSerializer,BidSerializer
+#from rest_framework.authtoken.views import ObtainAuthToken
+#from rest_framework.authtoken.models import Token
+#stripe.api_key = 'your_stripe_secret_key'
 # Create your views here.
 # Home page
-def home(request):
-    return render(request, 'home.html')
-# create API and function to add vendor 
-class VendorCreateAPIView(generics.CreateAPIView):
-    queryset = Vendor.objects.all()
-    serializer_class = VendorSerializer
-    template_name = 'vendor_create.html'
 
-    def get_success_url(self):
-        return reverse('vendor_create.html')
-
+#authentication
+""" class CustomObtainAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
-        form = VendorForm(request.POST)
-        if form.is_valid():
-            vendor = form.save()
-            serializer = VendorSerializer(vendor)
-            return render(request, self.template_name, {'success_url': self.get_success_url()})
-        return render(request, self.template_name, {'form': form})
+        response = super().post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        return Response({'token': token.key, 'user_id': token.user_id})
 
+obtain_auth_token = CustomObtainAuthToken.as_view()
+ """
 
-class VendorDetailAPIView(generics.RetrieveAPIView):
+class CreateUserView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+# create venders after authentication
+class CreateVendorView(generics.CreateAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    template_name = 'vendor_detail.html'
+    #permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        vendor = self.get_object()
-        return render(request, self.template_name, {'vendor': vendor})
-
-# API to update our Vendor model
-class VendorUpdateAPIView(generics.UpdateAPIView):
+    def create_vender(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_201_CREATED:
+            data = response.data
+            data['user'] = request.user.id
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            return response
+        
+# retrieve all venders
+class VendorListView(generics.ListAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
+    #permission_classes = [permissions.IsAuthenticated]
 
-    def put(self, request, pk):
-        vendor = self.get_object()
-        serializer = self.get_serializer(vendor, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# API to delete specific Vender
-class VendorDeleteAPIView(generics.DestroyAPIView):
+class VendorDetailView(generics.RetrieveAPIView):
     queryset = Vendor.objects.all()
-    serializer_class = VendorDeleteSerializer
+    serializer_class = VendorSerializer
+    #permission_classes = [permissions.IsAuthenticated]
 
+class VendorUpdateView(generics.UpdateAPIView):
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
+    #permission_classes = [permissions.IsAuthenticated]
 
-# An API to add data to our Tender model
-
-class TenderCreateAPIView(generics.CreateAPIView):
-    queryset = Tender.objects.all()
-    serializer_class = TenderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        form = TenderForm(vendor=request.user.vendor)
-        return render(request, 'tender_create.html', {'form': form})
-
-    def post(self, request, *args, **kwargs):
-        form = TenderForm(vendor=request.user.vendor, data=request.POST, files=request.FILES)
-        if form.is_valid():
-            tender = form.save()
-            return render(request, 'tender_created.html', {'tender': tender})
-        return render(request, 'tender_create.html', {'form': form})
-    
-# Set up Stripe API key
-#stripe.api_key = settings.STRIPE_SECRET_KEY
-
-@api_view(['GET', 'POST'])
-def create_payment_intent(request, tender_id):
-    """
-    View function to render the payment form and create a payment intent
-    """
-    # Retrieve Tender object
-    tender = get_object_or_404(Tender, id=tender_id)
-
-    if request.method == 'POST':
-        # Process payment form
-        form = PaymentForm(request.POST)
-        if form.is_valid():
-            # Calculate service fee
-            service_fee = tender.service_fee
-
-            # Calculate total amount
-            total_amount = service_fee + form.cleaned_data['amount']
-
-            # Create payment intent
-            payment_intent = stripe.PaymentIntent.create(
-                amount=total_amount,
-                currency=form.cleaned_data['currency'],
-                description=form.cleaned_data['description'],
-                metadata={'stripe_customer_id': form.cleaned_data['stripe_customer_id']}
-            )
-
-            # Render payment confirmation template
-            return render(request, 'payment_confirmation.html', {'client_secret': payment_intent.client_secret})
-
-    else:
-        # Render payment form template
-        form = PaymentForm()
-        return render(request, 'payment_form.html', {'tender': tender, 'form': form})
-
-@api_view(['POST'])
-def submit_bid(request, tender_id):
-    """
-    API endpoint to submit a Bid for a Tender
-    """
-    # Retrieve Tender object
-    tender = get_object_or_404(Tender, id=tender_id)
-
-    # Check if Tender is unexpired
-    if tender.is_expired():
-        return Response({'error': 'This Tender has expired.'}, status=400)
-
-    # Process Bid form
-    serializer = BidSerializer(data=request.data)
-    if serializer.is_valid():
-        # Create Bid object
-        bid = serializer.save(tender=tender, bidder=request.user)
-
-        # Render Bid submission confirmation template
-        return render(request, 'bid_confirmation.html', {'bid': bid})
-# API to update our Tendor model
-class TenderUpdateAPIView(generics.UpdateAPIView):
-    queryset = Tender.objects.all()
-    serializer_class = TenderSerializer
-    form_class = TenderForm
-    template_name = 'tender_update.html'
-
-    def get_success_url(self):
-        return reverse('tender_update', kwargs={'pk': self.get_object().pk})
-
-    def get(self, request, *args, **kwargs):
-        instance = self.get_object()
-        form = self.form_class(instance=instance)
-        return render(request, self.template_name, {'form': form, 'tender': instance})
+    def get_object(self):
+        return self.request.user.vendor
 
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        form = self.form_class(request.POST, instance=instance)
-        if form.is_valid():
-            form.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return render(request, self.template_name, {'form': form, 'tender': instance})
-    
-# API to delete specific Tender    
-class TenderDeleteAPIView(generics.DestroyAPIView):
-    queryset = Tender.objects.all()
-    serializer_class = TenderSerializer
-    template_name = 'tender_confirm_delete.html'
+        response = super().put(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            return Response({'message': 'Vendor updated successfully.'}, status=status.HTTP_200_OK)
+        else:
+            return response
 
-    def get_success_url(self):
-        return reverse('tender_list')
+class VendorDeleteView(generics.DestroyAPIView):
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
+    #permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        instance = self.get_object()
-        return render(request, self.template_name, {'tender': instance})
+    def get_object(self):
+        return self.request.user.vendor
 
     def delete(self, request, *args, **kwargs):
-        self.get_object().delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-# API to add grades to our bids
-class GradeCreateAPIView(generics.CreateAPIView):
-    form_class = GradeForm
-    serializer_class = GradeSerializer
-    template_name = 'my_template.html'
- # In the example above, my_page_name is the name of the URL pattern 
- # that corresponds to the HTML page you want to redirect
-    def get_success_url(self):
-        return reverse('my_page_name')
-
-    def perform_create(self, serializer):
-        bid = get_object_or_404(Bid, pk=self.kwargs['pk'])
-        serializer.save(bid=bid)
-        return render(self.request, self.template_name, {'success_url': self.get_success_url()})
-
-    
-
-""" # API to update our Bid model
-class BidUpdateAPIView(generics.UpdateAPIView):
-    queryset = Bid.objects.all()
-    serializer_class = BidSerializer
-
-    def update_bid(self, request, *args, **kwargs):
-        instance = self.get_object()
-        form = BidForm(request.POST, instance=instance)
-        if form.is_valid():
-            bid = form.save()
-            serializer = BidSerializer(bid)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST) """
-
-# API to update our Grade model
-class GradeUpdateAPIView(generics.UpdateAPIView):
-    queryset = Grade.objects.all()
-    serializer_class = GradeSerializer
-    form_class = GradeForm
-    template_name = 'grade_update.html'
-
-    def get_success_url(self):
-        return reverse('grade_update', kwargs={'pk': self.get_object().pk})
-
-    def get(self, request, *args, **kwargs):
-        instance = self.get_object()
-        form = self.form_class(instance=instance)
-        return render(request, self.template_name, {'form': form, 'grade': instance})
-
-    def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        form = self.form_class(request.POST, instance=instance)
-        if form.is_valid():
-            form.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return render(request, self.template_name, {'form': form, 'grade': instance})
-
-
-
-# API to delete a specific Bid
-class BidDeleteAPIView(generics.DestroyAPIView):
-    queryset = Bid.objects.all()
-    serializer_class = BidSerializer
-
-#view tender detail
-class TenderListAPIView(generics.ListAPIView):
+        response = super().delete(request, *args, **kwargs)
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            return Response({'message': 'Vendor deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return response
+        
+# create tenders for bid
+class TenderCreateView(generics.CreateAPIView):
     queryset = Tender.objects.all()
     serializer_class = TenderSerializer
+    #permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, format=None):
-        tenders = self.get_queryset()
-        serializer = self.serializer_class(tenders, many=True)
-        return render(request, 'tender_list.html', {'tenders': serializer.data})
-    
-# Api to show available (posted) bids
-class BidListAPIView(generics.ListAPIView):
-    queryset = Bid.objects.all()
+    def create_tender(self, request, *args, **kwargs):
+        vendor = request.user.vendor
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(vendor=vendor)
+        return Response({'message': 'Tender created successfully.'}, status=status.HTTP_201_CREATED)
+
+# retrieve tenders
+class TenderListView(generics.ListAPIView):
+    serializer_class = TenderSerializer
+
+    def get_queryset(self):
+        now = timezone.now()
+        open_tenders = Tender.objects.filter(expiration_date__gt=now)
+        closed_tenders = Tender.objects.filter(expiration_date__lte=now)
+        open_tenders.update(status='Open')
+        closed_tenders.update(status='Closed')
+        return open_tenders
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    #permission_classes = [permissions.IsAuthenticated]
+
+class TenderDetailView(generics.RetrieveAPIView):
+    queryset = Tender.objects.all()
+    serializer_class = TenderSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+
+class TenderUpdateView(generics.UpdateAPIView):
+    queryset = Tender.objects.all()
+    serializer_class = TenderSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        tender = super().get_object()
+        vendor = self.request.user.vendor
+        if tender.vendor != vendor:
+            raise PermissionDenied("You don't have permission to update this Tender.")
+        return tender
+
+    def put(self, request, *args, **kwargs):
+        response = super().put(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            return Response({'message': 'Tender updated successfully.'}, status=status.HTTP_200_OK)
+        else:
+            return response
+
+class TenderDeleteView(generics.DestroyAPIView):
+    queryset = Tender.objects.all()
+    serializer_class = TenderSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        tender = super().get_object()
+        vendor = self.request.user.vendor
+        if tender.vendor != vendor:
+            raise PermissionDenied("You don't have permission to delete this Tender.")
+        return tender
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            return Response({'message': 'Tender deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return response
+        
+#Bid processing using strip payment method
+
+class BidCreateView(generics.CreateAPIView):
     serializer_class = BidSerializer
 
-    def get(self, request, format=None):
-        bids = self.get_queryset()
-        serializer = self.serializer_class(bids, many=True)
-        return render(request, 'bid_list.html', {'bids': serializer.data})
+    def post(self, request, *args, **kwargs):
+        tender_id = kwargs.get('tender_id')
+        try:
+            tender = Tender.objects.get(id=tender_id)
+        except Tender.DoesNotExist:
+            return Response({'message': 'Tender does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
+        if datetime.now().date() > tender.expiration_date:
+            return Response({'message': 'Tender has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(tender=tender, user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+#retrive bids
+class BidListView(generics.ListAPIView):
+    serializer_class = BidSerializer
+
+    def get_queryset(self):
+        tender = Tender.objects.get(pk=self.kwargs['pk'])
+        bids = Bid.objects.filter(tender=tender).order_by('-amount')
+
+        # get the expiry date of the tender
+        expiry_date = tender.expiration_date
+
+        # loop through all the bids and update their status based on the amount and expiry date
+        for bid in bids:
+            if bid.amount >= bids.first().amount and expiry_date <= timezone.now():
+                bid.status = 'winner'
+            elif expiry_date > timezone.now():
+                bid.status = 'pending'
+            else:
+                bid.status = 'loose'
+            bid.save()
+
+        return bids
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+""" class BidCreateView(generics.CreateAPIView):
+    queryset = Bid.objects.all()
+    serializer_class = BidSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create_bid(self, request, *args, **kwargs):
+        tender = Tender.objects.get(pk=kwargs['pk'])
+        service_fee = tender.service_fee
+        expiration_date = tender.expiration_date
+        vendor = request.user.vendor
+
+        if not stripe.Customer.list(email=vendor.email)['data']:
+            customer = stripe.Customer.create(email=vendor.email, source=request.data['stripeToken'])
+            vendor.stripe_customer_id = customer.id
+            vendor.save()
+        else:
+            customer = stripe.Customer.list(email=vendor.email)['data'][0]
+
+        if customer.default_source is None:
+            return Response({'message': 'No payment method found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if expiration_date < timezone.now().date():
+            return JsonResponse({'message': 'The expiration date for this Tender has passed.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            charge = stripe.Charge.create(
+                amount=service_fee,
+                currency='usd',
+                customer=customer.id,
+                description=f'Service fee for Tender {tender.pk}'
+            )
+        except stripe.error.CardError as e:
+            body = e.json_body
+            err = body.get('error', {})
+            return Response({'message': err.get('message')}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(vendor=vendor, tender=tender)
+        return JsonResponse({'message': 'Bid submitted successfully.'}, status=status.HTTP_201_CREATED)
+
+    def post(self, request, *args, **kwargs):
+        return self.create_bid(request, *args, **kwargs)
+ """

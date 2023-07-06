@@ -1,30 +1,49 @@
 from django.urls import path
-from .views import VendorCreateAPIView,TenderCreateAPIView,GradeCreateAPIView,GradeUpdateAPIView,VendorDeleteAPIView,TenderDeleteAPIView,BidDeleteAPIView,TenderListAPIView,BidListAPIView,VendorDetailAPIView,VendorUpdateAPIView,TenderUpdateAPIView
-from .import views
-from.views import home
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from .views import (
+    #obtain_auth_token,
+    CreateUserView,
+
+    CreateVendorView,
+    VendorListView,
+    VendorDetailView,
+    VendorUpdateView,
+    VendorDeleteView,
+    TenderCreateView,
+    TenderDetailView,
+    TenderListView,
+    TenderUpdateView,
+    TenderDeleteView,
+    BidCreateView,
+    BidListView,
+
+)
 app_name = 'E_Tender'
 
 urlpatterns = [
-    # Paths to create  models
-    path('', home, name='home'),
-    path('vendor/create/', VendorCreateAPIView.as_view(), name='vendor_create'),
-    path('vendor/<int:pk>/', VendorDetailAPIView.as_view(), name='vendor_detail'),
-    path('vendor/<int:pk>/update/', VendorUpdateAPIView.as_view(), name='vendor_update'),
-    path('vender/<int:pk>/delete/', VendorDeleteAPIView.as_view(), name='vender-delete'),
+    # user authentication
+    #path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
+    path('users/', CreateUserView.as_view(), name='create_user'),
 
-    path('tenders/create/', TenderCreateAPIView.as_view(), name='tender_create'),
-    path('tenders/', TenderListAPIView.as_view(), name='tender-list'),
-    path('tenders/<int:pk>/update/', TenderUpdateAPIView.as_view(), name='tender_update'),
-    path('tenders/<int:pk>/delete/', TenderDeleteAPIView.as_view(), name='tender_delete'),
+    # venders operation path
+    path('vendors/create', CreateVendorView.as_view(), name='create_vendor'),
+    path('vendors/<int:pk>/', VendorDetailView.as_view(), name='vendor_detail'),
+    path('vendors/all/', VendorListView.as_view(), name='vendor_list'),
+    path('vendors/update/', VendorUpdateView.as_view(), name='vendor_update'),
+    path('vendors/delete/', VendorDeleteView.as_view(), name='vendor_delete'),
+   
+   # vendors opration
+    path('tenders/create/', TenderCreateView.as_view(), name='tender_create'),
+    path('tenders/<int:pk>/', TenderDetailView.as_view(), name='tender_detail'),
+    path('tenders/all/', TenderListView.as_view(), name='tender_list'),
+    path('tenders/<int:pk>/update/', TenderUpdateView.as_view(), name='tender_update'),
+    path('tenders/<int:pk>/delete/', TenderDeleteView.as_view(), name='tender_delete'),
 
-    path('<int:tender_id>/payment/',views.create_payment_intent, name='create_payment_intent'),
-    path('<int:tender_id>/bid/', views.submit_bid, name='submit_bid'),
-    path('bids/', BidListAPIView.as_view(), name='bid-list'),
-    path('bid/<int:pk>/delete/', BidDeleteAPIView.as_view(), name='bid-delete'),
-    
-    
-    path('bid/<int:pk>/grade/create/', GradeCreateAPIView.as_view(), name='create-grade'),
-    path('grades/<int:pk>/update/', GradeUpdateAPIView.as_view(), name='grade_update'),
-    ]
-
+# Bid processing
+ path('tender/<int:pk>/bid/', BidCreateView.as_view(), name='bid_create'),
+ path('tender/<int:pk>/bids/', BidListView.as_view(), name='bid_list'),
+]
 
