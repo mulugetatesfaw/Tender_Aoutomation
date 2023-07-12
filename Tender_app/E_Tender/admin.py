@@ -8,21 +8,21 @@ admin.site.index_title='Well come to E-Tender'
 
 @admin.register(models.Bid)
 class BidAdmin(admin.ModelAdmin):
-    list_display=[ 'bid_date', 'status']
-    search_fields=[' status', 'bid_date']
-    list_filter = ['bid_date']
-    search_fields=[' status', 'bid_date']
+    list_display=['bid_date','amount', 'status',]
+    search_fields=['bid_date','amount','status']
+    list_filter = ['bid_date','amount', 'status']
+    search_fields=['bid_date', 'amount','status']
 
 @admin.register(models.Tender)
 class TenderAdmin(admin.ModelAdmin):
-    list_display=['status']
-    search_fields=['post_date', 'expiry_date','status']
-    list_filter = ['status']
-    search_fields=['post_date', 'expiry_date','status']
+    list_display=['tittle','created_at','expiration_date','service_fee','status']
+    search_fields=['tittle','created_at','expiration_date','service_fee','status']
+    list_filter = ['tittle','created_at','expiration_date','service_fee','status']
+    search_fields=['tittle','created_at','expiration_date','service_fee','status']
 
 @admin.register(models.Vendor)
 class VendorAdmin(admin.ModelAdmin):
-    list_display=[ 'user', 'campony']
-    search_fields=['user', 'campony']
-    list_filter = ['user', 'campony']
-    search_fields=['user' ,'campony']
+    list_display=['user', 'phone_number','address','campony','catagory']
+    search_fields=['user', 'phone_number','address','campony','catagory']
+    list_filter = ['user', 'phone_number','address','campony','catagory']
+    search_fields=['user', 'phone_number','address','campony','catagory']

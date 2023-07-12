@@ -9,30 +9,17 @@ from django.core.exceptions import PermissionDenied
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from .serializers import VendorSerializer, UserSerializer,TenderSerializer,BidSerializer
-#from rest_framework.authtoken.views import ObtainAuthToken
-#from rest_framework.authtoken.models import Token
-#stripe.api_key = 'your_stripe_secret_key'
-# Create your views here.
-# Home page
 
-#authentication
-""" class CustomObtainAuthToken(ObtainAuthToken):
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        token = Token.objects.get(key=response.data['token'])
-        return Response({'token': token.key, 'user_id': token.user_id})
-
-obtain_auth_token = CustomObtainAuthToken.as_view()
- """
-
+# create user
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
 # create venders after authentication
 class CreateVendorView(generics.CreateAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def create_vender(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -47,17 +34,17 @@ class CreateVendorView(generics.CreateAPIView):
 class VendorListView(generics.ListAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    
 
 class VendorDetailView(generics.RetrieveAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+
 
 class VendorUpdateView(generics.UpdateAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    
 
     def get_object(self):
         return self.request.user.vendor
@@ -72,8 +59,7 @@ class VendorUpdateView(generics.UpdateAPIView):
 class VendorDeleteView(generics.DestroyAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    #permission_classes = [permissions.IsAuthenticated]
-
+    
     def get_object(self):
         return self.request.user.vendor
 
@@ -88,7 +74,7 @@ class VendorDeleteView(generics.DestroyAPIView):
 class TenderCreateView(generics.CreateAPIView):
     queryset = Tender.objects.all()
     serializer_class = TenderSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    
 
     def create_tender(self, request, *args, **kwargs):
         vendor = request.user.vendor
@@ -113,18 +99,17 @@ class TenderListView(generics.ListAPIView):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    #permission_classes = [permissions.IsAuthenticated]
+    
 
 class TenderDetailView(generics.RetrieveAPIView):
     queryset = Tender.objects.all()
     serializer_class = TenderSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    
 
 class TenderUpdateView(generics.UpdateAPIView):
     queryset = Tender.objects.all()
     serializer_class = TenderSerializer
-    #permission_classes = [permissions.IsAuthenticated]
-
+    
     def get_object(self):
         tender = super().get_object()
         vendor = self.request.user.vendor
@@ -142,7 +127,7 @@ class TenderUpdateView(generics.UpdateAPIView):
 class TenderDeleteView(generics.DestroyAPIView):
     queryset = Tender.objects.all()
     serializer_class = TenderSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    
 
     def get_object(self):
         tender = super().get_object()
@@ -158,7 +143,7 @@ class TenderDeleteView(generics.DestroyAPIView):
         else:
             return response
         
-#Bid processing using strip payment method
+#Bid processing 
 
 class BidCreateView(generics.CreateAPIView):
     serializer_class = BidSerializer
@@ -210,48 +195,3 @@ class BidListView(generics.ListAPIView):
 
 
 
-
-""" class BidCreateView(generics.CreateAPIView):
-    queryset = Bid.objects.all()
-    serializer_class = BidSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def create_bid(self, request, *args, **kwargs):
-        tender = Tender.objects.get(pk=kwargs['pk'])
-        service_fee = tender.service_fee
-        expiration_date = tender.expiration_date
-        vendor = request.user.vendor
-
-        if not stripe.Customer.list(email=vendor.email)['data']:
-            customer = stripe.Customer.create(email=vendor.email, source=request.data['stripeToken'])
-            vendor.stripe_customer_id = customer.id
-            vendor.save()
-        else:
-            customer = stripe.Customer.list(email=vendor.email)['data'][0]
-
-        if customer.default_source is None:
-            return Response({'message': 'No payment method found.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if expiration_date < timezone.now().date():
-            return JsonResponse({'message': 'The expiration date for this Tender has passed.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            charge = stripe.Charge.create(
-                amount=service_fee,
-                currency='usd',
-                customer=customer.id,
-                description=f'Service fee for Tender {tender.pk}'
-            )
-        except stripe.error.CardError as e:
-            body = e.json_body
-            err = body.get('error', {})
-            return Response({'message': err.get('message')}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(vendor=vendor, tender=tender)
-        return JsonResponse({'message': 'Bid submitted successfully.'}, status=status.HTTP_201_CREATED)
-
-    def post(self, request, *args, **kwargs):
-        return self.create_bid(request, *args, **kwargs)
- """

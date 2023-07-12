@@ -7,9 +7,9 @@ class Vendor(models.Model):
     phone_number =models.CharField(max_length=20)
     campony = models.CharField(max_length=255,null=True)
     TYPE_CHOICES = (
-        ('Type 1', 'Construction'),
-        ('Type 2', 'Telecomunication'),
-        ('Type 3', 'Software products')
+        ('Construction', 'Construction'),
+        ('Telecomunication', 'Telecomunication'),
+        ('Software products', 'Software products')
     )
     
     catagory = models.CharField(max_length=255, choices=TYPE_CHOICES)
