@@ -15,12 +15,31 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from django.shortcuts import redirect
+from django.conf import settings
+from django.conf.urls.static import static
+from E_Tender.views import UserRegistrationView,AuthenticationView
+
+
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+
+
+# Define the URL patterns for the views
+from django.urls import path, include
+from django.views.generic import RedirectView
+
 
 urlpatterns = [
-    path('', lambda request: redirect('admin/')),
-    path('admin/', admin.site.urls),
-    path('api/', include('E_Tender.urls')),
-   
+    path('', RedirectView.as_view(url='/admin/')),
 
+    path('admin/', admin.site.urls),
+    path('api/register/', UserRegistrationView.as_view(), name='user-registration'),
+    path('api/auth/', include('rest_framework.urls')),
+    path('api/auth/token/', TokenObtainPairView.as_view(), name='token-obtain-pair'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+    path('api/auth/user/', AuthenticationView.as_view(), name='user-authentication'),
+
+    path('api/', include('E_Tender.urls')),
+    
 ]
+urlpatterns.extend(static(settings.STATIC_URL, document_root=settings.STATIC_ROOT))

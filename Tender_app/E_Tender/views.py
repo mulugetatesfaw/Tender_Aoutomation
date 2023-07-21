@@ -1,20 +1,56 @@
 from datetime import datetime,timezone
-from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 
+
 #import stripe
-from .models import User,Vendor,Tender,Bid
+from .models import Vendor,Tender,Bid
 from django.core.exceptions import PermissionDenied
 from rest_framework import generics, status, permissions
-from rest_framework.response import Response
-from .serializers import VendorSerializer, UserSerializer,TenderSerializer,BidSerializer
+from .serializers import VendorSerializer,UserSerializer,TenderSerializer,BidSerializer
+from django.contrib.auth import authenticate, login,logout
+from django.contrib.auth import get_user_model
 
-# create user
-class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
+#registration 
+User = get_user_model()
+
+class UserRegistrationView(generics.CreateAPIView):
+    permission_classes = [permissions.AllowAny]
     serializer_class = UserSerializer
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "message": "User created successfully"
+        }, status=status.HTTP_201_CREATED)
+
+class AuthenticationView(generics.GenericAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = self.get_serializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': 'Invalid login credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def delete(self, request):
+        logout(request)
+        return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+    
 # create venders after authentication
 class CreateVendorView(generics.CreateAPIView):
     queryset = Vendor.objects.all()

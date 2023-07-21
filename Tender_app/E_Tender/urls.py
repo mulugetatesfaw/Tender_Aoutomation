@@ -4,9 +4,9 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from .views import (
+    UserRegistrationView,
     #obtain_auth_token,
-    CreateUserView,
-
+    AuthenticationView,
     CreateVendorView,
     VendorListView,
     VendorDetailView,
@@ -24,9 +24,8 @@ from .views import (
 app_name = 'E_Tender'
 
 urlpatterns = [
-    # user authentication
-    path('users/', CreateUserView.as_view(), name='create_user'),
-
+    path('register/', UserRegistrationView.as_view(), name='user-registration'),
+    path('auth/', AuthenticationView.as_view(), name='user-authentication'),
     # vendors operation path
     path('vendors/create', CreateVendorView.as_view(), name='create_vendor'),
     path('vendors/<int:pk>/', VendorDetailView.as_view(), name='vendor_detail'),
@@ -42,7 +41,7 @@ urlpatterns = [
     path('tenders/<int:pk>/delete/', TenderDeleteView.as_view(), name='tender_delete'),
 
 # Bid processing
- path('tender/<int:pk>/bid/', BidCreateView.as_view(), name='bid_create'),
- path('tender/<int:pk>/bids/', BidListView.as_view(), name='bid_list'),
+   path('tender/<int:pk>/bid/', BidCreateView.as_view(), name='bid_create'),
+   path('tender/<int:pk>/bids/', BidListView.as_view(), name='bid_list'),
 ]
 
